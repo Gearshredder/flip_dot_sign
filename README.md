@@ -30,6 +30,8 @@ your_project/
 - **lib/wifi_scan.py**: Script to scan WiFi networks.
 - **config/config.json**: Configuration file for WiFi credentials (ignored in git).
 - **config/font1.json**: Font configuration for the flipdot display.
+- **scripts/font_creator.py**: Script to create or modify the font configuration.
+- **images/font_creator_screenshot.png**: Screenshot of the font creator in action.
 - **.gitignore**: Specifies files and directories to be ignored by Git.
 
 ## Setup
@@ -80,6 +82,23 @@ config/config.json
 
 3. **Flipdot Display:**
    - The `main.py` script initializes the flipdot display and performs initial setup.
+
+### 4. Creating or Modifying Fonts
+
+**Use the Font Creator Script:**
+
+The `scripts/font_creator.py` script is provided to create or modify the font configuration (`config/font1.json`).
+Run the script with Python to generate the `font1.json` file.
+
+```bash
+python scripts/font_creator.py
+```
+
+**Font Creator in Action:**
+
+Here’s a screenshot of the font creator in action:
+
+![Font Creator Screenshot](images/font_creator_screenshot.png)
 
 ### Todo
 
