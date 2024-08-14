@@ -10,10 +10,27 @@ Email:diverge@protonmail.com
 '''
 
 try:
-    from time import sleep_ms #sleep_ms is part of micropython
+    from time import sleep_ms  # sleep_ms is part of MicroPython
     from machine import Pin
-except:
-    print("Unable to import machine,time modules on PC")
+except ImportError:
+    # Define a mock Pin class here for local testing if machine.Pin is not available
+    from mock_machine import sleep_ms, MockPin as Pin
+    class Pin:
+        IN = 0
+        OUT = 1
+        PULL_UP = 2
+        PULL_DOWN = 3
+
+        def __init__(self, pin_number, mode, pull=None):
+            self.pin_number = pin_number
+            self.mode = mode
+            self.pull = pull
+
+        def on(self):
+            pass
+
+        def off(self):
+            pass
 
 
 class Display:
