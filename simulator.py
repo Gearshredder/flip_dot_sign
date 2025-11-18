@@ -32,7 +32,9 @@ class FlipDotSimulator:
 
     def __init__(self, modules: int = 3, cell_size: int = 24) -> None:
         self.font = load_font()
+        self.base_cell_size = cell_size
         self.cell_size = cell_size
+        self.min_cell_size = 4
         self.modules = modules
         self.column_gap_cells = 1  # blank column after every 5 columns for readability
         self.sign = Display(modules)
@@ -43,6 +45,7 @@ class FlipDotSimulator:
 
         self.root = tk.Tk()
         self.root.title("Flip-Dot Sign Simulator")
+        self.max_canvas_width = max(600, int(self.root.winfo_screenwidth() * 0.9))
 
         self._build_controls()
         self._build_canvas()
@@ -85,8 +88,9 @@ class FlipDotSimulator:
         self.canvas_frame = ttk.Frame(self.root, padding=10)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+        self._update_cell_size()
         total_width = self._canvas_width
-        total_height = self.cell_size * 7
+        total_height = self._canvas_height
         self.canvas = tk.Canvas(
             self.canvas_frame,
             width=total_width,
@@ -126,8 +130,18 @@ class FlipDotSimulator:
 
     @property
     def _canvas_width(self) -> int:
-        visual_columns = self._columns + (self.modules - 1) * self.column_gap_cells
-        return self.cell_size * visual_columns
+        return self.cell_size * self._visual_columns
+
+    @property
+    def _canvas_height(self) -> int:
+        return self.cell_size * 7
+
+    @property
+    def _visual_columns(self) -> int:
+        if self._columns <= 1 or self.column_gap_cells <= 0:
+            return self._columns
+        gaps = ((self._columns - 1) // 5) * self.column_gap_cells
+        return self._columns + gaps
 
     # Actions ------------------------------------------------------------
     def _on_modules_changed(self) -> None:
@@ -137,7 +151,8 @@ class FlipDotSimulator:
         self.render_text()
 
     def _resize_canvas(self) -> None:
-        self.canvas.configure(width=self._canvas_width)
+        self._update_cell_size()
+        self.canvas.configure(width=self._canvas_width, height=self._canvas_height)
         self._draw_cells()
 
     def _fill(self, color: int) -> None:
@@ -168,6 +183,16 @@ class FlipDotSimulator:
         color = "gold" if is_on else "gray20"
         self.canvas.itemconfigure(self.cell_ids[row][col], fill=color)
         self.current_states[row][col] = is_on
+
+    def _update_cell_size(self) -> None:
+        if self._visual_columns == 0:
+            return
+        available_size = self.max_canvas_width // self._visual_columns
+        if available_size <= 0:
+            available_size = self.min_cell_size
+        new_size = max(self.min_cell_size, min(self.base_cell_size, available_size))
+        if new_size != self.cell_size:
+            self.cell_size = new_size
 
     def run(self) -> None:
         self.root.mainloop()
