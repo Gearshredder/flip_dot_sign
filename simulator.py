@@ -5,19 +5,24 @@ onto a simple grid of rectangles. It reuses the font loading logic
 from ``main.py`` so rendered characters match the hardware.
 """
 import json
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 
 from lib.flipper import Display
 
 
-def load_font(path: str = "font1.json") -> list:
+def load_font(path: str | Path = "config/font1.json") -> list:
     """Load the 5x7 font table from ``font1.json``.
 
     Returns a list indexed by ASCII value where each entry contains seven
     row bytes describing a 5x7 character.
     """
-    with open(path, "r", encoding="utf-8") as font_file:
+    font_path = Path(path)
+    if not font_path.is_absolute():
+        font_path = Path(__file__).parent / font_path
+
+    with open(font_path, "r", encoding="utf-8") as font_file:
         ascii_dict = json.load(font_file)
         return [ascii_dict[char][1:8] for char in range(123)]
 
