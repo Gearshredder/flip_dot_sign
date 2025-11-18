@@ -181,6 +181,12 @@ class FlipDotSimulator:
     def queue_text(self, text: str) -> None:
         self._command_queue.put(("text", text))
 
+    def fill_on(self) -> None:
+        self._fill(1)
+
+    def fill_off(self) -> None:
+        self._fill(0)
+
     def _apply_text_to_buffer(self, text: str) -> None:
         self._fill(0)
         trimmed = text[: self.modules * 5]

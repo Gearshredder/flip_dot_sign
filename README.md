@@ -108,9 +108,9 @@ Use the desktop simulator together with a local copy of the HTML control page to
 python utilities/dev_server.py
 ```
 
-This command launches the Tkinter simulator window and starts an HTTP server (default `http://127.0.0.1:8080/`). A browser window opens automatically so you can interact with the HTML page; submitting the form immediately updates the simulator grid. Use `Ctrl+C` in the terminal to stop the server, or pass `--no-browser`/`--port` if you need custom settings.
+This command launches the Tkinter simulator window and starts an HTTP server (default `http://127.0.0.1:8080/`). A browser window opens automatically so you can interact with the HTML page; submitting any of the forms (single-line or multi-line playlists, preset playlists, live clock, manual time, countdown timer, fill/clear) immediately updates the simulator grid. Use `Ctrl+C` in the terminal to stop the server, or pass `--no-browser`/`--port` if you need custom settings.
 
-The preview replicates device behaviour: switching to *Time Mode* keeps the displayed clock ticking, and *Scrolling Text Mode* cycles through the newline-delimited entries you provide. No firmware files need to change for desktop prototyping.
+The preview replicates device behaviour: *Live Clock* keeps the displayed time ticking, *Manual Time* freezes a custom clock value, *Countdown* animates a “minutes:seconds” timer down to “TIME UP!”, and the combined playlist input shows a single line as static text while multiple lines cycle automatically (with optional faster pacing or one-click presets). No firmware files need to change for desktop prototyping.
 
 ### Todo
 
