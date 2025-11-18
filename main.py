@@ -1,5 +1,6 @@
 import json
 import time
+from pathlib import Path
 from lib.wifi_manager import WifiManager
 from lib.flipper import Display
 
@@ -22,7 +23,8 @@ sign = Display(3)
 # Load font configuration from font1.json
 try:
     print("Trying to load font...")
-    with open('font1.json', 'r') as font_file:
+    font_path = Path(__file__).parent / "config" / "font1.json"
+    with open(font_path, 'r') as font_file:
         ascii_dict = json.load(font_file)
         font = [ascii_dict[char][1:8] for char in range(123)]
         print("Font loaded")
