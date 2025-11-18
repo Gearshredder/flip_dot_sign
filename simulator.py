@@ -5,28 +5,19 @@ onto a simple grid of rectangles. It reuses the font loading logic
 from ``main.py`` so rendered characters match the hardware.
 """
 import json
-from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 
 from lib.flipper import Display
 
 
-def load_font(path: str | Path | None = None) -> list:
-    """Load the 5x7 font table.
-
-    Defaults to ``config/font1.json`` so the simulator works when launched from
-    any directory.
+def load_font(path: str = "font1.json") -> list:
+    """Load the 5x7 font table from ``font1.json``.
 
     Returns a list indexed by ASCII value where each entry contains seven
     row bytes describing a 5x7 character.
     """
-
-    if path is None:
-        path = Path(__file__).resolve().parent / "config" / "font1.json"
-    font_path = Path(path)
-
-    with open(font_path, "r", encoding="utf-8") as font_file:
+    with open(path, "r", encoding="utf-8") as font_file:
         ascii_dict = json.load(font_file)
         return [ascii_dict[char][1:8] for char in range(123)]
 
@@ -38,6 +29,8 @@ class FlipDotSimulator:
         self.font = load_font()
         self.cell_size = cell_size
         self.modules = modules
+        self.char_gap = max(4, cell_size // 3)
+        self.flip_delay_ms = 15
 
         self.sign = Display(modules)
         self.sign.fill(0)
@@ -86,7 +79,7 @@ class FlipDotSimulator:
         self.canvas_frame = ttk.Frame(self.root, padding=10)
         self.canvas_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        total_width = self.cell_size * self._columns
+        total_width = self._canvas_width
         total_height = self.cell_size * 7
         self.canvas = tk.Canvas(
             self.canvas_frame,
@@ -100,10 +93,12 @@ class FlipDotSimulator:
     def _draw_cells(self) -> None:
         self.canvas.delete("all")
         self.cell_ids = []
+        self.current_states: list[list[bool]] = []
         for row in range(7):
             row_ids = []
+            state_row = []
             for col in range(self._columns):
-                x1 = col * self.cell_size + 2
+                x1 = col * self.cell_size + (col // 5) * self.char_gap + 2
                 y1 = row * self.cell_size + 2
                 x2 = x1 + self.cell_size - 4
                 y2 = y1 + self.cell_size - 4
@@ -111,13 +106,19 @@ class FlipDotSimulator:
                     x1, y1, x2, y2, fill="gray20", outline="gray40"
                 )
                 row_ids.append(rect_id)
+                state_row.append(False)
             self.cell_ids.append(row_ids)
+            self.current_states.append(state_row)
         self._refresh_grid()
 
     # Properties ---------------------------------------------------------
     @property
     def _columns(self) -> int:
-        return self.modules * 25
+        return self.modules * 5
+
+    @property
+    def _canvas_width(self) -> int:
+        return self.cell_size * self._columns + self.char_gap * (self.modules - 1)
 
     # Actions ------------------------------------------------------------
     def _on_modules_changed(self) -> None:
@@ -128,8 +129,7 @@ class FlipDotSimulator:
         self.render_text()
 
     def _resize_canvas(self) -> None:
-        total_width = self.cell_size * self._columns
-        self.canvas.configure(width=total_width)
+        self.canvas.configure(width=self._canvas_width)
         self._draw_cells()
 
     def _fill(self, color: int) -> None:
@@ -139,17 +139,27 @@ class FlipDotSimulator:
     def render_text(self) -> None:
         self._fill(0)
         text = self.text_var.get()
-        trimmed = text[: self.modules * 5]
+        trimmed = text[: self.modules]
         self.sign.write_string_to_buffer(trimmed, self.font)
         self._refresh_grid()
 
     def _refresh_grid(self) -> None:
+        changes: list[tuple[int, int, bool]] = []
         for row in range(7):
             row_value = self.sign.display_buffer1[row]
             for col in range(self._columns):
                 is_on = bool(row_value & (1 << (col)))
-                color = "gold" if is_on else "gray20"
-                self.canvas.itemconfigure(self.cell_ids[row][col], fill=color)
+                if is_on != self.current_states[row][col]:
+                    changes.append((row, col, is_on))
+
+        for index, (row, col, is_on) in enumerate(changes):
+            delay = index * self.flip_delay_ms
+            self.root.after(delay, self._apply_cell_state, row, col, is_on)
+
+    def _apply_cell_state(self, row: int, col: int, is_on: bool) -> None:
+        color = "gold" if is_on else "gray20"
+        self.canvas.itemconfigure(self.cell_ids[row][col], fill=color)
+        self.current_states[row][col] = is_on
 
     def run(self) -> None:
         self.root.mainloop()
