@@ -29,11 +29,12 @@ class FlipDotSimulator:
         self.font = load_font()
         self.cell_size = cell_size
         self.modules = modules
-        self.char_gap = max(4, cell_size // 3)
-        self.flip_delay_ms = 15
-
+        self.column_gap_cells = 1  # blank column after every 5 columns for readability
         self.sign = Display(modules)
         self.sign.fill(0)
+
+        self.processing_overhead_ms = 1
+        self.flip_delay_ms = self.sign.flip_ms + self.processing_overhead_ms
 
         self.root = tk.Tk()
         self.root.title("Flip-Dot Sign Simulator")
@@ -98,7 +99,8 @@ class FlipDotSimulator:
             row_ids = []
             state_row = []
             for col in range(self._columns):
-                x1 = col * self.cell_size + (col // 5) * self.char_gap + 2
+                visual_col = col + col // 5 * self.column_gap_cells
+                x1 = visual_col * self.cell_size + 2
                 y1 = row * self.cell_size + 2
                 x2 = x1 + self.cell_size - 4
                 y2 = y1 + self.cell_size - 4
@@ -118,7 +120,8 @@ class FlipDotSimulator:
 
     @property
     def _canvas_width(self) -> int:
-        return self.cell_size * self._columns + self.char_gap * (self.modules - 1)
+        visual_columns = self._columns + (self.modules - 1) * self.column_gap_cells
+        return self.cell_size * visual_columns
 
     # Actions ------------------------------------------------------------
     def _on_modules_changed(self) -> None:
