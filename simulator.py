@@ -5,19 +5,28 @@ onto a simple grid of rectangles. It reuses the font loading logic
 from ``main.py`` so rendered characters match the hardware.
 """
 import json
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
 
 from lib.flipper import Display
 
 
-def load_font(path: str = "font1.json") -> list:
-    """Load the 5x7 font table from ``font1.json``.
+def load_font(path: str | Path | None = None) -> list:
+    """Load the 5x7 font table.
+
+    Defaults to ``config/font1.json`` so the simulator works when launched from
+    any directory.
 
     Returns a list indexed by ASCII value where each entry contains seven
     row bytes describing a 5x7 character.
     """
-    with open(path, "r", encoding="utf-8") as font_file:
+
+    if path is None:
+        path = Path(__file__).resolve().parent / "config" / "font1.json"
+    font_path = Path(path)
+
+    with open(font_path, "r", encoding="utf-8") as font_file:
         ascii_dict = json.load(font_file)
         return [ascii_dict[char][1:8] for char in range(123)]
 
@@ -108,7 +117,7 @@ class FlipDotSimulator:
     # Properties ---------------------------------------------------------
     @property
     def _columns(self) -> int:
-        return self.modules * 5
+        return self.modules * 25
 
     # Actions ------------------------------------------------------------
     def _on_modules_changed(self) -> None:
@@ -130,7 +139,7 @@ class FlipDotSimulator:
     def render_text(self) -> None:
         self._fill(0)
         text = self.text_var.get()
-        trimmed = text[: self.modules]
+        trimmed = text[: self.modules * 5]
         self.sign.write_string_to_buffer(trimmed, self.font)
         self._refresh_grid()
 
