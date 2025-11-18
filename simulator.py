@@ -121,7 +121,8 @@ class FlipDotSimulator:
     # Properties ---------------------------------------------------------
     @property
     def _columns(self) -> int:
-        return self.modules * 5
+        # Each module supports 5 characters and every character is 5 columns wide
+        return self.modules * 25
 
     @property
     def _canvas_width(self) -> int:
@@ -132,7 +133,6 @@ class FlipDotSimulator:
     def _on_modules_changed(self) -> None:
         self.modules = int(self.modules_var.get())
         self.sign.modules = self.modules
-        self._fill(0)
         self._resize_canvas()
         self.render_text()
 
@@ -147,7 +147,7 @@ class FlipDotSimulator:
     def render_text(self) -> None:
         self._fill(0)
         text = self.text_var.get()
-        trimmed = text[: self.modules]
+        trimmed = text[: self.modules * 5]
         self.sign.write_string_to_buffer(trimmed, self.font)
         self._refresh_grid()
 
