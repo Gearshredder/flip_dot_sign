@@ -5,9 +5,15 @@ onto a simple grid of rectangles. It reuses the font loading logic
 from ``main.py`` so rendered characters match the hardware.
 """
 import json
+import sys
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk
+from queue import Empty, SimpleQueue
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
 
 from lib.flipper import Display
 
@@ -20,7 +26,8 @@ def load_font(path: str | Path = "config/font1.json") -> list:
     """
     font_path = Path(path)
     if not font_path.is_absolute():
-        font_path = Path(__file__).parent / font_path
+        project_root = Path(__file__).resolve().parents[1]
+        font_path = project_root / font_path
 
     with open(font_path, "r", encoding="utf-8") as font_file:
         ascii_dict = json.load(font_file)
@@ -47,9 +54,14 @@ class FlipDotSimulator:
         self.root.title("Flip-Dot Sign Simulator")
         self.max_canvas_width = max(600, int(self.root.winfo_screenwidth() * 0.9))
 
+        self._command_queue: SimpleQueue[tuple[str, str]] = SimpleQueue()
+        self._update_token = 0
+
         self._build_controls()
         self._build_canvas()
         self._draw_cells()
+        self._poll_command_queue()
+        self._boot_animation()
 
     # UI helpers ---------------------------------------------------------
     def _build_controls(self) -> None:
@@ -160,13 +172,24 @@ class FlipDotSimulator:
         self._refresh_grid()
 
     def render_text(self) -> None:
+        self.display_text(self.text_var.get())
+
+    def display_text(self, text: str) -> None:
+        self.text_var.set(text)
+        self._apply_text_to_buffer(text)
+
+    def queue_text(self, text: str) -> None:
+        self._command_queue.put(("text", text))
+
+    def _apply_text_to_buffer(self, text: str) -> None:
         self._fill(0)
-        text = self.text_var.get()
         trimmed = text[: self.modules * 5]
         self.sign.write_string_to_buffer(trimmed, self.font)
         self._refresh_grid()
 
     def _refresh_grid(self) -> None:
+        self._update_token += 1
+        token = self._update_token
         changes: list[tuple[int, int, bool]] = []
         for row in range(7):
             row_value = self.sign.display_buffer1[row]
@@ -177,12 +200,25 @@ class FlipDotSimulator:
 
         for index, (row, col, is_on) in enumerate(changes):
             delay = index * self.flip_delay_ms
-            self.root.after(delay, self._apply_cell_state, row, col, is_on)
+            self.root.after(delay, self._apply_cell_state, row, col, is_on, token)
 
-    def _apply_cell_state(self, row: int, col: int, is_on: bool) -> None:
+    def _apply_cell_state(self, row: int, col: int, is_on: bool, token: int) -> None:
+        if token != self._update_token:
+            return
         color = "gold" if is_on else "gray20"
         self.canvas.itemconfigure(self.cell_ids[row][col], fill=color)
         self.current_states[row][col] = is_on
+
+    def _poll_command_queue(self) -> None:
+        try:
+            while True:
+                command, payload = self._command_queue.get_nowait()
+                if command == "text":
+                    self.display_text(payload)
+        except Empty:
+            pass
+        finally:
+            self.root.after(50, self._poll_command_queue)
 
     def _update_cell_size(self) -> None:
         if self._visual_columns == 0:
@@ -193,6 +229,13 @@ class FlipDotSimulator:
         new_size = max(self.min_cell_size, min(self.base_cell_size, available_size))
         if new_size != self.cell_size:
             self.cell_size = new_size
+
+    def _boot_animation(self) -> None:
+        # Mimic the ESP32 boot sequence: fill on, then clear after all flips.
+        self._fill(1)
+        total_cells = max(1, self._columns * 7)
+        boot_duration = max(600, total_cells * self.flip_delay_ms)
+        self.root.after(boot_duration, lambda: self._fill(0))
 
     def run(self) -> None:
         self.root.mainloop()

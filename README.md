@@ -100,6 +100,18 @@ Here’s a screenshot of the font creator in action:
 
 ![Font Creator Screenshot](images/font_creator_screenshot.png)
 
+### 5. Desktop Simulator & Web Preview
+
+Use the desktop simulator together with a local copy of the HTML control page to prototype changes without flashing the ESP32:
+
+```bash
+python utilities/dev_server.py
+```
+
+This command launches the Tkinter simulator window and starts an HTTP server (default `http://127.0.0.1:8080/`). A browser window opens automatically so you can interact with the HTML page; submitting the form immediately updates the simulator grid. Use `Ctrl+C` in the terminal to stop the server, or pass `--no-browser`/`--port` if you need custom settings.
+
+The preview replicates device behaviour: switching to *Time Mode* keeps the displayed clock ticking, and *Scrolling Text Mode* cycles through the newline-delimited entries you provide. No firmware files need to change for desktop prototyping.
+
 ### Todo
 
 - [ ] Create a multiplexer with I2C to control each of the bits to set the dot. The write/erase will be an I/O connected to the controller still.

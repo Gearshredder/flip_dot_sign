@@ -4,6 +4,8 @@ import ntptime
 import socket
 from machine import RTC, Timer
 
+from .web_template import HTML_PAGE
+
 class WifiManager:
     def __init__(self, font, sign, ssid, password, connection_type):
         self.sign = sign
@@ -110,71 +112,7 @@ class WifiManager:
                 print("Connection with client closed.")
 
     def web_page(self):
-        html = """
-        <html>
-            <head>
-                <title>FLIP DOT SIGN</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="icon" href="data:,">
-                <style>
-                    html {
-                        font-family: Helvetica; 
-                        display: inline-block; 
-                        margin: 0px auto; 
-                        text-align: center;
-                    }
-                    h1 {
-                        color: #0F3376; 
-                        padding: 2vh;
-                    }
-                    p {
-                        font-size: 1.5rem;
-                    }
-                    .button {
-                        display: inline-block; 
-                        background-color: #e7bd3b; 
-                        border: none; 
-                        border-radius: 4px; 
-                        color: white; 
-                        padding: 16px 40px; 
-                        text-decoration: none; 
-                        font-size: 30px; 
-                        margin: 2px; 
-                        cursor: pointer;
-                    }
-                    .button2 {
-                        background-color: #4286f4;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Flip Dot Sign</h1>
-                <form action="/" method="GET">
-                    <div>
-                        <input type="radio" id="text_mode" name="mode" value="text">
-                        <label for="text_mode">Text Mode</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="time_mode" name="mode" value="time">
-                        <label for="time_mode">Time Mode</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="scroll_mode" name="mode" value="scroll">
-                        <label for="scroll_mode">Scrolling Text Mode</label>
-                    </div>
-                    <div>
-                        <label for="scroll_text">Scrolling Text (separate lines with a newline):</label>
-                        <textarea id="scroll_text" name="scroll_text"></textarea>
-                    </div>
-                    <div>
-                        <label for="entry">Type some text:</label>
-                        <input type="text" id="entry" name="entry" minlength="1" maxlength="15">
-                    </div>
-                    <button type="submit">Submit</button>
-                </form>
-            </body>
-        </html>"""
-        return html
+        return HTML_PAGE
 
     def set_time_from_ntp(self, max_attempts=3, timeout=5):
         attempt = 0
